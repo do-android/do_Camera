@@ -109,7 +109,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			quality = quality > 100 ? 100 : quality;
 			quality = quality < 1 ? 1 : quality;
 			// 是否启动中间裁剪界面
-			this.iscut = DoJsonHelper.getOneBoolean(_dictParas, "iscut", false);
+			this.iscut = DoJsonHelper.getBoolean(_dictParas, "iscut", false);
 			// 回调函数
 			this.callbackFuncName = _callbackFuncName;
 
