@@ -1,6 +1,6 @@
 package dotest.module.frame.debug;
 
-import core.helper.jsonparse.DoJsonNode;
+import org.json.JSONObject;
 import core.interfaces.DoIApp;
 import core.interfaces.DoIPage;
 import core.interfaces.DoIPageView;
@@ -19,7 +19,7 @@ public class DoPage implements DoIPage {
 	}
 	
 	@Override
-	public DoUIModule createUIModule(DoUIContainer arg0, DoJsonNode arg1)
+	public DoUIModule createUIModule(DoUIContainer arg0, JSONObject arg1)
 			throws Exception {
 		// TODO Auto-generated method stub
 		return null;

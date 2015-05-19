@@ -3,6 +3,8 @@ package doext.implement;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
+import org.json.JSONObject;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,8 +15,8 @@ import android.provider.MediaStore;
 import core.DoServiceContainer;
 import core.helper.DoIOHelper;
 import core.helper.DoImageHandleHelper;
+import core.helper.DoJsonHelper;
 import core.helper.DoTextHelper;
-import core.helper.jsonparse.DoJsonNode;
 import core.interfaces.DoActivityResultListener;
 import core.interfaces.DoIPageView;
 import core.interfaces.DoIScriptEngine;
@@ -44,7 +46,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 	 * @_invokeResult 用于返回方法结果对象
 	 */
 	@Override
-	public boolean invokeSyncMethod(String _methodName, DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, DoInvokeResult _invokeResult) throws Exception {
+	public boolean invokeSyncMethod(String _methodName, JSONObject _dictParas, DoIScriptEngine _scriptEngine, DoInvokeResult _invokeResult) throws Exception {
 		// ...do something
 		return super.invokeSyncMethod(_methodName, _dictParas, _scriptEngine, _invokeResult);
 	}
@@ -63,7 +65,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 	 *                    DoInvokeResult(this.getUniqueKey());
 	 */
 	@Override
-	public boolean invokeAsyncMethod(String _methodName, DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
+	public boolean invokeAsyncMethod(String _methodName, JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
 		if ("capture".equals(_methodName)) {
 			this.capture(_dictParas, _scriptEngine, _callbackFuncName);
 			return true;
@@ -72,7 +74,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 	}
 
 	@Override
-	public void capture(DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
+	public void capture(JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
 		try {
 			DoInvokeResult _invokeResult = new DoInvokeResult(this.getUniqueKey());
 			CameraCaptureListener _myListener = new CameraCaptureListener();
@@ -96,18 +98,18 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		private String picTempPath;
 		private DoIPageView activity;
 
-		public void init(DoJsonNode _dictParas, DoIScriptEngine _scriptEngine, DoInvokeResult _invokeResult, String _callbackFuncName) throws Exception {
+		public void init(JSONObject _dictParas, DoIScriptEngine _scriptEngine, DoInvokeResult _invokeResult, String _callbackFuncName) throws Exception {
 			this.scriptEngine = _scriptEngine;
 			// 图片宽度
-			this.width = _dictParas.getOneInteger("width", -1);
+			this.width = DoJsonHelper.getInt(_dictParas, "width", -1);
 			// 图片高度
-			this.height = _dictParas.getOneInteger("height", -1);
+			this.height = DoJsonHelper.getInt(_dictParas, "height", -1);
 			// 清晰度1-100
-			this.quality = _dictParas.getOneInteger("quality", 100);
+			this.quality = DoJsonHelper.getInt(_dictParas,"quality", 100);
 			quality = quality > 100 ? 100 : quality;
 			quality = quality < 1 ? 1 : quality;
 			// 是否启动中间裁剪界面
-			this.iscut = _dictParas.getOneBoolean("iscut", false);
+			this.iscut = DoJsonHelper.getOneBoolean(_dictParas, "iscut", false);
 			// 回调函数
 			this.callbackFuncName = _callbackFuncName;
 
