@@ -129,6 +129,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			try {
 				// 回调
 				if ((requestCode == CameraCode || requestCode == CutCode) && resultCode == Activity.RESULT_CANCELED) { // 取消
+					activity.unregistActivityResultListener(this);
 					DoServiceContainer.getLogEngine().writeInfo("取消拍照", "info");
 				} else if ((requestCode == CameraCode && resultCode == Activity.RESULT_OK) || (requestCode == CutCode)) {
 					if (this.iscut && requestCode == CameraCode) {
