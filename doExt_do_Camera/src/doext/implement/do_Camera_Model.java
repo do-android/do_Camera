@@ -137,13 +137,13 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 						intentCrop.setDataAndType(imageUri, "image/*");
 						intentCrop.putExtra("crop", "true");
 						// aspectX aspectY 是宽高的比例
-						if (this.width <= 0 || this.height <= 0) {
-							intentCrop.putExtra("aspectX", 1);
-							intentCrop.putExtra("aspectY", 1);
-						} else {
-							intentCrop.putExtra("aspectX", this.width);
-							intentCrop.putExtra("aspectY", this.height);
-						}
+//						if (this.width <= 0 || this.height <= 0) {
+//							intentCrop.putExtra("aspectX", 1);
+//							intentCrop.putExtra("aspectY", 1);
+//						} else {
+//							intentCrop.putExtra("aspectX", this.width);
+//							intentCrop.putExtra("aspectY", this.height);
+//						}
 						// outputX outputY 是裁剪图片宽高
 //						intentCrop.putExtra("outputX", this.width);
 //						intentCrop.putExtra("outputY", this.height);
