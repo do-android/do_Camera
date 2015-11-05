@@ -2,12 +2,15 @@ package doext.implement;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -105,7 +108,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			// 图片高度
 			this.height = DoJsonHelper.getInt(_dictParas, "height", -1);
 			// 清晰度1-100
-			this.quality = DoJsonHelper.getInt(_dictParas,"quality", 100);
+			this.quality = DoJsonHelper.getInt(_dictParas, "quality", 100);
 			quality = quality > 100 ? 100 : quality;
 			quality = quality < 1 ? 1 : quality;
 			// 是否启动中间裁剪界面
@@ -184,14 +187,17 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			protected String doInBackground(String... params) {
 				DoInvokeResult invokeResult = new DoInvokeResult(getUniqueKey());
 				ByteArrayOutputStream photo_data = new ByteArrayOutputStream();
-				String _fileName = DoTextHelper.getTimestampStr() + ".png.do";
+				String _fileName = DoTextHelper.getTimestampStr() + ".png";
 				String _fileFullName = scriptEngine.getCurrentApp().getDataFS().getRootPath() + "/temp/do_Camera/" + _fileName;
 				Bitmap bitmap = null;
 				try {
 					bitmap = DoImageHandleHelper.resizeScaleImage(this.bitmapPath, width, height);
 					if (bitmap != null) {
+						int degree = getBitmapDegree(this.bitmapPath);
+						bitmap = rotateBitmapByDegree(bitmap, degree);
 						bitmap.compress(Bitmap.CompressFormat.JPEG, quality, photo_data);
 					}
+
 					DoIOHelper.writeAllBytes(_fileFullName, photo_data.toByteArray());
 					String _url = "data://temp/do_Camera/" + _fileName;
 					File photo = new File(picTempPath);
@@ -211,5 +217,66 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 				return null;
 			}
 		}
+
+	}
+
+	/**
+	 * 读取图片的旋转的角度
+	 * 
+	 * @param path
+	 *            图片绝对路径
+	 * @return 图片的旋转角度
+	 */
+	private int getBitmapDegree(String path) {
+		int degree = 0;
+		try {
+			// 从指定路径下读取图片，并获取其EXIF信息
+			ExifInterface exifInterface = new ExifInterface(path);
+			// 获取图片的旋转信息
+			int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+			switch (orientation) {
+			case ExifInterface.ORIENTATION_ROTATE_90:
+				degree = 90;
+				break;
+			case ExifInterface.ORIENTATION_ROTATE_180:
+				degree = 180;
+				break;
+			case ExifInterface.ORIENTATION_ROTATE_270:
+				degree = 270;
+				break;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return degree;
+	}
+
+	/**
+	 * 将图片按照某个角度进行旋转
+	 * 
+	 * @param bm
+	 *            需要旋转的图片
+	 * @param degree
+	 *            旋转角度
+	 * @return 旋转后的图片
+	 */
+	private Bitmap rotateBitmapByDegree(Bitmap bm, int degree) {
+		Bitmap returnBm = null;
+
+		// 根据旋转角度，生成旋转矩阵
+		Matrix matrix = new Matrix();
+		matrix.postRotate(degree);
+		try {
+			// 将原始图片按照旋转矩阵进行旋转，并得到新的图片
+			returnBm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
+		} catch (OutOfMemoryError e) {
+		}
+		if (returnBm == null) {
+			returnBm = bm;
+		}
+		if (bm != returnBm) {
+			bm.recycle();
+		}
+		return returnBm;
 	}
 }
