@@ -187,7 +187,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			protected String doInBackground(String... params) {
 				DoInvokeResult invokeResult = new DoInvokeResult(getUniqueKey());
 				ByteArrayOutputStream photo_data = new ByteArrayOutputStream();
-				String _fileName = DoTextHelper.getTimestampStr() + ".png";
+				String _fileName = DoTextHelper.getTimestampStr() + ".png.do";
 				String _fileFullName = scriptEngine.getCurrentApp().getDataFS().getRootPath() + "/temp/do_Camera/" + _fileName;
 				Bitmap bitmap = null;
 				try {
