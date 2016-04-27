@@ -161,7 +161,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 						if (this.iscut) {
 							bitmapPath = Environment.getExternalStorageDirectory() + "/temp.jpg";
 						}
-						new CameraSaveTask(activity, this, callbackFuncName, bitmapPath).execute(new String[] {});
+						new CameraSaveTask(activity, this, callbackFuncName, bitmapPath).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[] {});
 					}
 				}
 			} catch (Exception _err) {
@@ -169,7 +169,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			}
 		}
 
-		class CameraSaveTask extends AsyncTask<String, Void, String> {
+		private class CameraSaveTask extends AsyncTask<String, Void, String> {
 
 			private String callbackFuncName;
 			private DoIPageView activity;
