@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import core.DoServiceContainer;
 import core.helper.DoIOHelper;
 import core.helper.DoImageHandleHelper;
@@ -116,6 +117,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		private int height;
 		private int quality;
 		private boolean iscut;
+		private String outPath;
 		private String callbackFuncName;
 		private DoIScriptEngine scriptEngine;
 		private String picTempPath;
@@ -133,6 +135,8 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			quality = quality < 1 ? 1 : quality;
 			// 是否启动中间裁剪界面
 			this.iscut = DoJsonHelper.getBoolean(_dictParas, "iscut", false);
+
+			this.outPath = DoJsonHelper.getString(_dictParas, "outPath", "");
 			// 回调函数
 			this.callbackFuncName = _callbackFuncName;
 
@@ -182,7 +186,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 						if (this.iscut) {
 							bitmapPath = Environment.getExternalStorageDirectory() + "/temp.jpg";
 						}
-						new CameraSaveTask(activity, this, callbackFuncName, bitmapPath).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[] {});
+						new CameraSaveTask(activity, this, callbackFuncName, bitmapPath, outPath).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new String[] {});
 					}
 				}
 			} catch (Exception _err) {
@@ -196,22 +200,39 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			private DoIPageView activity;
 			private DoActivityResultListener doActivityResultListener;
 			private String bitmapPath;
+			private String outPath;
 
-			public CameraSaveTask(DoIPageView activity, DoActivityResultListener resultListener, String callbackFuncName, String bitmapPath) {
+			public CameraSaveTask(DoIPageView activity, DoActivityResultListener resultListener, String callbackFuncName, String bitmapPath, String outPath) {
 				this.callbackFuncName = callbackFuncName;
 				this.activity = activity;
 				this.doActivityResultListener = resultListener;
 				this.bitmapPath = bitmapPath;
+				this.outPath = outPath;
 			}
 
 			@Override
 			protected String doInBackground(String... params) {
+				boolean _isUseDefault = false;
 				DoInvokeResult invokeResult = new DoInvokeResult(getUniqueKey());
 				ByteArrayOutputStream photo_data = new ByteArrayOutputStream();
 				String _fileName = DoTextHelper.getTimestampStr() + ".png.do";
-				String _fileFullName = scriptEngine.getCurrentApp().getDataFS().getRootPath() + "/temp/do_Camera/" + _fileName;
+
+				String _fillPath = "";
+				try {
+					_fillPath = DoIOHelper.getLocalFileFullPath(scriptEngine.getCurrentPage().getCurrentApp(), outPath);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				if (TextUtils.isEmpty(_fillPath)) {
+					_isUseDefault = true;
+					_fillPath = scriptEngine.getCurrentApp().getDataFS().getRootPath() + "/temp/do_Camera/" + _fileName;
+				}
+
 				Bitmap bitmap = null;
 				try {
+					if (!DoIOHelper.existFile(_fillPath)) {
+						DoIOHelper.createFile(_fillPath);
+					}
 					bitmap = DoImageHandleHelper.resizeScaleImage(this.bitmapPath, width, height);
 					if (bitmap != null) {
 						int degree = getBitmapDegree(this.bitmapPath);
@@ -219,11 +240,15 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 						bitmap.compress(Bitmap.CompressFormat.JPEG, quality, photo_data);
 					}
 
-					DoIOHelper.writeAllBytes(_fileFullName, photo_data.toByteArray());
-					String _url = "data://temp/do_Camera/" + _fileName;
+					DoIOHelper.writeAllBytes(_fillPath, photo_data.toByteArray());
 					File photo = new File(picTempPath);
 					photo.delete();
-					invokeResult.setResultText(_url);
+
+					String _resultText = outPath;
+					if (_isUseDefault) {
+						_resultText = "data://temp/do_Camera/" + _fileName;
+					}
+					invokeResult.setResultText(_resultText);
 					scriptEngine.callback(this.callbackFuncName, invokeResult);
 				} catch (Exception _err) {
 					DoServiceContainer.getLogEngine().writeError("do_Camera_Model", _err);
