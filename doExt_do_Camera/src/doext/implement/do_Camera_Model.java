@@ -10,6 +10,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.hardware.Camera;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -35,6 +36,8 @@ import doext.define.do_Camera_IMethod;
  * DoInvokeResult(this.getUniqueKey());
  */
 public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMethod {
+
+	private int cammeraIndex = -1;
 
 	public do_Camera_Model() throws Exception {
 		super();
@@ -79,6 +82,23 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 	@Override
 	public void capture(JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
 		try {
+			//启动前置摄像头
+			boolean isFacingFront = DoJsonHelper.getBoolean(_dictParas, "facingFront", false);
+			if (isFacingFront) {
+				cammeraIndex = findFrontCamera();
+				if (cammeraIndex == -1) {
+					cammeraIndex = findBackCamera();
+				}
+			} else {
+				cammeraIndex = findBackCamera();
+				if (cammeraIndex == -1) {
+					cammeraIndex = findFrontCamera();
+				}
+			}
+			if (cammeraIndex == -1) {
+				throw new Exception("无法打开系统摄像头！");
+			}
+
 			DoInvokeResult _invokeResult = new DoInvokeResult(this.getUniqueKey());
 			CameraCaptureListener _myListener = new CameraCaptureListener();
 			_myListener.init(_dictParas, _scriptEngine, _invokeResult, _callbackFuncName);
@@ -120,6 +140,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			activity.registActivityResultListener(this);
 			// 照相机拍照
 			Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+			intent.putExtra("android.intent.extras.CAMERA_FACING", cammeraIndex);
 			picTempPath = ((Activity) activity).getExternalCacheDir() + "/" + DoTextHelper.getTimestampStr() + ".jpg";
 			File photo = new File(picTempPath);
 			imageUri = Uri.fromFile(photo);
@@ -278,5 +299,35 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			bm.recycle();
 		}
 		return returnBm;
+	}
+
+	private int findFrontCamera() {
+		int cameraCount = 0;
+		Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+		cameraCount = Camera.getNumberOfCameras(); // get cameras number  
+
+		for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
+			Camera.getCameraInfo(camIdx, cameraInfo); // get camerainfo  
+			if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+				// 代表摄像头的方位，目前有定义值两个分别为CAMERA_FACING_FRONT前置和CAMERA_FACING_BACK后置  
+				return camIdx;
+			}
+		}
+		return -1;
+	}
+
+	private int findBackCamera() {
+		int cameraCount = 0;
+		Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+		cameraCount = Camera.getNumberOfCameras(); // get cameras number  
+
+		for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
+			Camera.getCameraInfo(camIdx, cameraInfo); // get camerainfo  
+			if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
+				// 代表摄像头的方位，目前有定义值两个分别为CAMERA_FACING_FRONT前置和CAMERA_FACING_BACK后置  
+				return camIdx;
+			}
+		}
+		return -1;
 	}
 }
