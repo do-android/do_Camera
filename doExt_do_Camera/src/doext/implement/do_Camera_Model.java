@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.ExifInterface;
@@ -19,7 +20,6 @@ import android.provider.MediaStore;
 import android.text.TextUtils;
 import core.DoServiceContainer;
 import core.helper.DoIOHelper;
-import core.helper.DoImageHandleHelper;
 import core.helper.DoJsonHelper;
 import core.helper.DoTextHelper;
 import core.interfaces.DoActivityResultListener;
@@ -233,7 +233,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 					if (!DoIOHelper.existFile(_fillPath)) {
 						DoIOHelper.createFile(_fillPath);
 					}
-					bitmap = DoImageHandleHelper.resizeScaleImage(this.bitmapPath, width, height);
+					bitmap = createScaledBitmap(this.bitmapPath, width, height);
 					if (bitmap != null) {
 						int degree = getBitmapDegree(this.bitmapPath);
 						bitmap = rotateBitmapByDegree(bitmap, degree);
@@ -355,4 +355,28 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		}
 		return -1;
 	}
+
+	public Bitmap createScaledBitmap(String path, int width, int height) {
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		// 表示使用BitmapFactory创建的Bitmap 用于存储Pixel的内存空间在系统内存不足时可以被回收，减少OOM发生；
+		options.inPurgeable = true;
+		options.inInputShareable = true;
+		// 不加载bitmap到内存中
+		options.inJustDecodeBounds = true;
+		// RGB_565设置为每像素点为2个字节，可能会影响透明度，计算占用内存公式：图片长度*图片宽度*2
+		options.inPreferredConfig = Bitmap.Config.RGB_565;
+		BitmapFactory.decodeFile(path, options);
+		int dstWidth = width;
+		int dstHeight = height;
+		if (width <= 0 && height > 0) {
+			dstWidth = options.outWidth / (options.outHeight / height);
+		} else if (width > 0 && height <= 0) {
+			dstHeight = options.outHeight / (options.outWidth / height);
+		} else if (width <= 0 && height <= 0) {
+			dstWidth = options.outWidth;
+			dstHeight = options.outHeight;
+		}
+		return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(path), dstWidth, dstHeight, false);
+	}
+
 }
