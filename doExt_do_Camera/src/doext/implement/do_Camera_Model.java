@@ -371,7 +371,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		if (width <= 0 && height > 0) {
 			dstWidth = options.outWidth / (options.outHeight / height);
 		} else if (width > 0 && height <= 0) {
-			dstHeight = options.outHeight / (options.outWidth / height);
+			dstHeight = options.outHeight / (options.outWidth / width);
 		} else if (width <= 0 && height <= 0) {
 			dstWidth = options.outWidth;
 			dstHeight = options.outHeight;
