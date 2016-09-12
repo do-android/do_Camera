@@ -2,6 +2,8 @@ package doext.implement;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.json.JSONObject;
@@ -362,7 +364,9 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		options.inPurgeable = true;
 		options.inInputShareable = true;
 		// 不加载bitmap到内存中
-		options.inJustDecodeBounds = true;
+//		options.inJustDecodeBounds = true;
+		//当在android设备中载入较大图片资源时，可以创建一些临时空间，将载入的资源载入到临时空间中
+		options.inTempStorage=new byte[12 * 1024];//创建了一个12kb的临时空间
 		// RGB_565设置为每像素点为2个字节，可能会影响透明度，计算占用内存公式：图片长度*图片宽度*2
 		options.inPreferredConfig = Bitmap.Config.RGB_565;
 		BitmapFactory.decodeFile(path, options);
@@ -376,7 +380,29 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			dstWidth = options.outWidth;
 			dstHeight = options.outHeight;
 		}
-		return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(path), dstWidth, dstHeight, false);
+		 File file = new File(path);
+         FileInputStream fs=null;
+         try {
+            fs = new FileInputStream(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+         Bitmap bmp = null;
+         if(fs != null)
+            try {
+                bmp = BitmapFactory.decodeFileDescriptor(fs.getFD(), null, options);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }finally{
+                if(fs!=null) {
+                    try {
+                        fs.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+		return Bitmap.createScaledBitmap(bmp, dstWidth, dstHeight, false);
 	}
 
 }
