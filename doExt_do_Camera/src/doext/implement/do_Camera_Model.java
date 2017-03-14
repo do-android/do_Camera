@@ -361,22 +361,40 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		// 表示使用BitmapFactory创建的Bitmap 用于存储Pixel的内存空间在系统内存不足时可以被回收，减少OOM发生；
 		options.inPurgeable = true;
 		options.inInputShareable = true;
-		// 不加载bitmap到内存中
-		options.inJustDecodeBounds = true;
-		// RGB_565设置为每像素点为2个字节，可能会影响透明度，计算占用内存公式：图片长度*图片宽度*2
-		options.inPreferredConfig = Bitmap.Config.RGB_565;
-		BitmapFactory.decodeFile(path, options);
-		int dstWidth = width;
-		int dstHeight = height;
-		if (width <= 0 && height > 0) {
-			dstWidth = options.outWidth / (options.outHeight / height);
-		} else if (width > 0 && height <= 0) {
-			dstHeight = options.outHeight / (options.outWidth / width);
-		} else if (width <= 0 && height <= 0) {
-			dstWidth = options.outWidth;
-			dstHeight = options.outHeight;
+		if (width > 0 && height > 0) {
+			options.inJustDecodeBounds = false;
+			Bitmap mBitmap = BitmapFactory.decodeFile(path, options);
+			int bmpWidth = mBitmap.getWidth();
+			int bmpHeight = mBitmap.getHeight();
+			// 缩放图片的尺寸
+			float scaleWidth = (float) width / bmpWidth;												
+			float scaleHeight = (float) height / bmpHeight; //
+			Matrix matrix = new Matrix();
+			matrix.postScale(scaleWidth, scaleHeight);// 产生缩放后的Bitmap对象
+			Bitmap resizeBitmap = Bitmap.createBitmap(mBitmap, 0, 0, bmpWidth, bmpHeight, matrix, false);
+			mBitmap.recycle();
+			return resizeBitmap;
+		} else {
+			// 不加载bitmap到内存中
+			options.inJustDecodeBounds = true;
+			// RGB_565设置为每像素点为2个字节，可能会影响透明度，计算占用内存公式：图片长度*图片宽度*2
+			options.inPreferredConfig = Bitmap.Config.RGB_565;
+			// 由于设置inJustDecodeBounds为true，因此执行下面代码后bitmap为空
+			BitmapFactory.decodeFile(path, options);
+
+			int scale = 1;
+			if (width <= 0 && height > 0) {
+				scale = (int) (options.outHeight / (float) height);
+			} else if (width > 0 && height <= 0) {
+				scale = (int) (options.outWidth / (float) width);
+			}
+			if (scale <= 0) {
+				scale = 1;
+			}
+			options.inSampleSize = scale;
+			options.inJustDecodeBounds = false;
+			return BitmapFactory.decodeFile(path, options);
 		}
-		return Bitmap.createScaledBitmap(BitmapFactory.decodeFile(path), dstWidth, dstHeight, false);
 	}
 
 }
