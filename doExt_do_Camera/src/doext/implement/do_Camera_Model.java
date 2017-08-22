@@ -83,7 +83,7 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 	@Override
 	public void capture(JSONObject _dictParas, DoIScriptEngine _scriptEngine, String _callbackFuncName) throws Exception {
 		try {
-			//启动前置摄像头
+			// 启动前置摄像头
 			boolean isFacingFront = DoJsonHelper.getBoolean(_dictParas, "facingFront", false);
 			if (isFacingFront) {
 				cammeraIndex = findFrontCamera();
@@ -329,12 +329,12 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 	private int findFrontCamera() {
 		int cameraCount = 0;
 		Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-		cameraCount = Camera.getNumberOfCameras(); // get cameras number  
+		cameraCount = Camera.getNumberOfCameras(); // get cameras number
 
 		for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
-			Camera.getCameraInfo(camIdx, cameraInfo); // get camerainfo  
+			Camera.getCameraInfo(camIdx, cameraInfo); // get camerainfo
 			if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-				// 代表摄像头的方位，目前有定义值两个分别为CAMERA_FACING_FRONT前置和CAMERA_FACING_BACK后置  
+				// 代表摄像头的方位，目前有定义值两个分别为CAMERA_FACING_FRONT前置和CAMERA_FACING_BACK后置
 				return camIdx;
 			}
 		}
@@ -344,12 +344,12 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 	private int findBackCamera() {
 		int cameraCount = 0;
 		Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-		cameraCount = Camera.getNumberOfCameras(); // get cameras number  
+		cameraCount = Camera.getNumberOfCameras(); // get cameras number
 
 		for (int camIdx = 0; camIdx < cameraCount; camIdx++) {
-			Camera.getCameraInfo(camIdx, cameraInfo); // get camerainfo  
+			Camera.getCameraInfo(camIdx, cameraInfo); // get camerainfo
 			if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-				// 代表摄像头的方位，目前有定义值两个分别为CAMERA_FACING_FRONT前置和CAMERA_FACING_BACK后置  
+				// 代表摄像头的方位，目前有定义值两个分别为CAMERA_FACING_FRONT前置和CAMERA_FACING_BACK后置
 				return camIdx;
 			}
 		}
@@ -361,22 +361,13 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		// 表示使用BitmapFactory创建的Bitmap 用于存储Pixel的内存空间在系统内存不足时可以被回收，减少OOM发生；
 		options.inPurgeable = true;
 		options.inInputShareable = true;
+		options.inJustDecodeBounds = true;
 		if (width > 0 && height > 0) {
+			BitmapFactory.decodeFile(path, options);
+			options.inSampleSize = calculateInSampleSize(options, width, height);
 			options.inJustDecodeBounds = false;
-			Bitmap mBitmap = BitmapFactory.decodeFile(path, options);
-			int bmpWidth = mBitmap.getWidth();
-			int bmpHeight = mBitmap.getHeight();
-			// 缩放图片的尺寸
-			float scaleWidth = (float) width / bmpWidth;												
-			float scaleHeight = (float) height / bmpHeight; //
-			Matrix matrix = new Matrix();
-			matrix.postScale(scaleWidth, scaleHeight);// 产生缩放后的Bitmap对象
-			Bitmap resizeBitmap = Bitmap.createBitmap(mBitmap, 0, 0, bmpWidth, bmpHeight, matrix, false);
-			mBitmap.recycle();
-			return resizeBitmap;
+			return BitmapFactory.decodeFile(path, options);
 		} else {
-			// 不加载bitmap到内存中
-			options.inJustDecodeBounds = true;
 			// RGB_565设置为每像素点为2个字节，可能会影响透明度，计算占用内存公式：图片长度*图片宽度*2
 			options.inPreferredConfig = Bitmap.Config.RGB_565;
 			// 由于设置inJustDecodeBounds为true，因此执行下面代码后bitmap为空
@@ -397,4 +388,23 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 		}
 	}
 
+	/**
+	 * 计算图片的缩放值
+	 *
+	 * @param options
+	 * @param reqWidth
+	 * @param reqHeight
+	 * @return
+	 */
+	public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+		final int height = options.outHeight;
+		final int width = options.outWidth;
+		int inSampleSize = 1;
+		if (height > reqHeight || width > reqWidth) {
+			final int heightRatio = Math.round((float) height / (float) reqHeight);
+			final int widthRatio = Math.round((float) width / (float) reqWidth);
+			inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
+		}
+		return inSampleSize;
+	}
 }
