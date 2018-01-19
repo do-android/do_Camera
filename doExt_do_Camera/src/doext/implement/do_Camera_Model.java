@@ -366,7 +366,17 @@ public class do_Camera_Model extends DoSingletonModule implements do_Camera_IMet
 			BitmapFactory.decodeFile(path, options);
 			options.inSampleSize = calculateInSampleSize(options, width, height);
 			options.inJustDecodeBounds = false;
-			return BitmapFactory.decodeFile(path, options);
+			Bitmap tempBitmap = BitmapFactory.decodeFile(path, options);
+			int bmpWidth = tempBitmap.getWidth();
+			int bmpHeight = tempBitmap.getHeight();
+			// 缩放图片的尺寸
+			float scaleWidth = (float) width / tempBitmap.getWidth();												
+			float scaleHeight = (float) height / tempBitmap.getHeight(); //
+			Matrix matrix = new Matrix();
+			matrix.postScale(scaleWidth, scaleHeight);// 产生缩放后的Bitmap对象
+			Bitmap resizeBitmap = Bitmap.createBitmap(tempBitmap, 0, 0, bmpWidth, bmpHeight, matrix, false);
+			tempBitmap.recycle();
+			return resizeBitmap;
 		} else {
 			// RGB_565设置为每像素点为2个字节，可能会影响透明度，计算占用内存公式：图片长度*图片宽度*2
 			options.inPreferredConfig = Bitmap.Config.RGB_565;
